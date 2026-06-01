@@ -105,9 +105,12 @@ class BackgroundDaemonService : LifecycleService() {
         super.onStartCommand(intent, flags, startId)
         
         val email = intent?.getStringExtra("email") ?: activeEmail
+        activeEmail = email
+        
+        // Always call startForeground first in onStartCommand to satisfy Android OS requirements
+        startForegroundNotification(email)
+        
         if (email.isNotEmpty() && (!isServiceInitialized || email != activeEmail)) {
-            activeEmail = email
-            startForegroundNotification(email)
             initializeDaemonLogic(email)
             isServiceInitialized = true
         }
@@ -131,26 +134,41 @@ class BackgroundDaemonService : LifecycleService() {
     }
 
     private fun startForegroundNotification(email: String) {
+        val displayEmail = if (email.isNotEmpty()) email else "Unregistered"
         val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Parent's Control Active")
-            .setContentText("Connected to supervisor framework for client: $email")
+            .setContentText("Connected to supervisor framework for client: $displayEmail")
             .setSmallIcon(android.R.drawable.ic_menu_compass)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             .setOngoing(true)
             .build()
         
-        // Declaring appropriate foreground types for API 34+
+        // Declaring appropriate foreground types for API 34+ if granted
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            // Note: Service types declared in the Manifest will cover these runtime properties.
-            // Under Android 14, if location, mic, and camera types are used, they must be registered.
-            startForeground(
-                NOTIFICATION_ID, 
-                notification, 
-                android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION or
-                    android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE or
-                    android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
-            )
+            var serviceType = android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                serviceType = serviceType or android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+            }
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                serviceType = serviceType or android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+            }
+            if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                serviceType = serviceType or android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA
+            }
+            
+            try {
+                startForeground(NOTIFICATION_ID, notification, serviceType)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error starting foreground service with types: ${e.message}. Falling back to metadata-driven startForeground.")
+                try {
+                    // Fallback to dataSync FGS type explicitly which only needs normal permission
+                    startForeground(NOTIFICATION_ID, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+                } catch (err: Exception) {
+                    Log.e(TAG, "Fatal fallback startForeground error: ${err.message}")
+                }
+            }
         } else {
             startForeground(NOTIFICATION_ID, notification)
         }
