@@ -47,6 +47,8 @@ import androidx.camera.video.VideoRecordEvent
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -1366,7 +1368,7 @@ fun SimpleBackgroundStatusUI(
             .fillMaxSize()
             .background(Color(0xFF0C0E14))
             .statusBarsPadding()
-            .androidx.compose.foundation.verticalScroll(androidx.compose.foundation.rememberScrollState())
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
