@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "852401080164",
+    "firebase_url": "https://my-project-c71d4-default-rtdb.firebaseio.com",
+    "project_id": "my-project-c71d4",
+    "storage_bucket": "my-project-c71d4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:852401080164:android:d03b42072d05d275dd1c71",
+        "android_client_info": {
+          "package_name": "com.devnazrul.appfocused"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtHwRvlezCmI8wnsQTOADwgFP_bkyIM2Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:852401080164:android:c461f6746759e810dd1c71",
+        "android_client_info": {
+          "package_name": "com.devnazrul.parentscontrol"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDtHwRvlezCmI8wnsQTOADwgFP_bkyIM2Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

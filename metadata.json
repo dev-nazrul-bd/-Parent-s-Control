@@ -1,0 +1,6 @@
+{
+  "name": "Parent's Control",
+  "description": "An advanced parental control child app supporting screen blocking, real-time GPS tracking, camera and mic live captures, and file storage manager access synchronized via Firebase and Cloudinary.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
