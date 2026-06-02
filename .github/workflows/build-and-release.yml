@@ -48,13 +48,20 @@ jobs:
             fi
           fi
 
+      - name: Clean up temporary or corrupt Gradle wrapper
+        run: |
+          rm -f gradle/wrapper/gradle-wrapper.jar
+          rm -f gradlew
+          rm -f gradlew.bat
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 9.3.1
+          validate-wrappers: false
 
       - name: Generate clean local gradle-wrapper
-        run: gradle wrapper --gradle-version 9.3.1
+        run: gradle wrapper --gradle-version 9.3.1 --distribution-type bin
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
