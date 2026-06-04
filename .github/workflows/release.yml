@@ -24,7 +24,7 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # প্রোডাকশন রিলিজের জন্য APK বা Bundle বিল্ড করুন
+      # প্রোডাকশন রিলিজের জন্য APK বিল্ড করুন
       - name: Build Release APK
         run: ./gradlew assembleRelease
 
@@ -37,4 +37,4 @@ jobs:
           draft: false
           prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN }} # আপনার সিক্রেট নেম 'TOKEN' এখানে সেট করে দেওয়া হলো
