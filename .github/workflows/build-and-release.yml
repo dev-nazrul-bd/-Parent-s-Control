@@ -82,12 +82,21 @@ jobs:
   release:
     name: Create GitHub Release
     needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     steps:
+      - name: Determine Release Tag
+        id: get_tag
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "TAG_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
+          else
+            echo "TAG_NAME=v1.0.${{ github.run_number }}" >> $GITHUB_ENV
+          fi
+
       - name: Download APK from Build Job
         uses: actions/download-artifact@v4
         with:
@@ -95,17 +104,18 @@ jobs:
           path: .
 
       - name: Rename APK for Release
-        run: mv app-release.apk parents-control-${{ github.ref_name }}.apk
+        run: mv app-release.apk parents-control-${{ env.TAG_NAME }}.apk
 
       - name: Create Release and Upload Asset
         uses: softprops/action-gh-release@v2
         with:
-          files: parents-control-${{ github.ref_name }}.apk
-          name: Release ${{ github.ref_name }}
+          tag_name: ${{ env.TAG_NAME }}
+          files: parents-control-${{ env.TAG_NAME }}.apk
+          name: Release ${{ env.TAG_NAME }}
           body: |
             Automated production build from GitHub Actions workflow.
             
-            **App Version:** ${{ github.ref_name }}
+            **App Version:** ${{ env.TAG_NAME }}
             **Latest Commit:** ${{ github.sha }}
           draft: false
           prerelease: false
