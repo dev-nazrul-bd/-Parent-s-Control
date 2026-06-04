@@ -1,0 +1,35 @@
+name: Generate Gradle Wrapper
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Wrapper Files Directly
+        run: |
+          # ১. ফোল্ডার তৈরি
+          mkdir -p gradle/wrapper
+
+          # ২. গ্র্যাডল অফিশিয়াল সাইট থেকে সরাসরি বাইনারি ফাইলগুলো ডাউনলোড করা
+          # আমরা ভার্সন ৮.০ ব্যবহার করছি
+          curl -L https://github.com/gradle/gradle/raw/v8.0.0/gradle/wrapper/gradle-wrapper.jar -o gradle/wrapper/gradle-wrapper.jar
+          curl -L https://github.com/gradle/gradle/raw/v8.0.0/gradle/wrapper/gradle-wrapper.properties -o gradle/wrapper/gradle-wrapper.properties
+          curl -L https://github.com/gradle/gradle/raw/v8.0.0/gradlew -o gradlew
+          curl -L https://github.com/gradle/gradle/raw/v8.0.0/gradlew.bat -o gradlew.bat
+
+          # ৩. পারমিশন সেট করা
+          chmod +x gradlew
+
+      - name: Commit and Push
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "Add Gradle Wrapper via direct download"
+          file_pattern: "gradlew gradlew.bat gradle/wrapper/*"
