@@ -1,0 +1,47 @@
+name: Android CI/CD Release
+
+on:
+  push:
+    tags:
+      - 'v*' # যখনই আপনি v1.0.0 বা v2.1.0 লিখে ট্যাগ পুশ করবেন, এই ওয়ার্কফ্লোটি চালু হবে
+
+jobs:
+  build:
+    name: Build and Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu' # অথবা 'temurin' ব্যবহার করতে পারেন
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # যদি আপনার keystore ফাইল থাকে, তবে সেটি সিক্রেট থেকে ডিকোড করার স্টেপ (ঐচ্ছিক কিন্তু রিলিজের জন্য জরুরি)
+      # - name: Decode Keystore
+      #   run: echo "${{ secrets.BASE64_KEYSTORE }}" | base64 --decode > app/release.keystore
+
+      # প্রোডাকশন রিলিজের জন্য Build Bundle (AAB) বা Build APK (APK) রান করুন
+      - name: Build Release APK
+        run: ./gradlew assembleRelease
+        # যদি প্লে-স্টোরে দিতে চান তবে এপিকে'র বদলে নিচের কমান্ডটি দিন:
+        # run: ./gradlew bundleRelease 
+
+      # বিল্ড হওয়া APK-টি GitHub Release-এ অটোমেটিক আপলোড করার জন্য
+      name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            app/build/outputs/apk/release/app-release.apk
+            # যদি বান্ডেল তৈরি করেন তবে পাথ হবে: app/build/outputs/bundle/release/app-release.aab
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }} # এটি গিটহাব নিজেই হ্যান্ডেল করে, আলাদা করে সেট করতে হয় না
