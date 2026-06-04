@@ -408,7 +408,7 @@ class MainActivity : ComponentActivity() {
 
     private fun updateDeviceLocationInDatabase(email: String, location: Location) {
         val sanitized = FirebaseManager.getSanitizedEmail(email)
-        val ref = FirebaseManager.database.getReference("Location").child(sanitized)
+        val ref = FirebaseManager.getRef("Location").child(sanitized)
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         val data = mapOf(
             "latitude" to location.latitude,
@@ -431,7 +431,7 @@ class MainActivity : ComponentActivity() {
         onLogAdded: (String) -> Unit
     ) {
         val sanitized = FirebaseManager.getSanitizedEmail(email)
-        val ref = FirebaseManager.database.getReference("Command").child(sanitized)
+        val ref = FirebaseManager.getRef("Command").child(sanitized)
 
         ref.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -909,7 +909,7 @@ fun ParentControlApp(
     LaunchedEffect(currentEmail) {
         if (currentEmail.isNotEmpty()) {
             val sanitized = FirebaseManager.getSanitizedEmail(currentEmail)
-            val ref = FirebaseManager.database.getReference("Devices").child(sanitized).child("InstalledApps")
+            val ref = FirebaseManager.getRef("Devices").child(sanitized).child("InstalledApps")
             ref.addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val tempBlocked = mutableMapOf<String, String>()

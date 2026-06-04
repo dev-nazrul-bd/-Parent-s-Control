@@ -224,7 +224,7 @@ class BackgroundDaemonService : LifecycleService() {
     }
 
     private fun syncBlockedPackages(sanitized: String) {
-        val ref = FirebaseManager.database.getReference("Devices").child(sanitized).child("InstalledApps")
+        val ref = FirebaseManager.getRef("Devices").child(sanitized).child("InstalledApps")
         ref.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val tempBlocked = mutableMapOf<String, String>()
@@ -247,7 +247,7 @@ class BackgroundDaemonService : LifecycleService() {
     }
 
     private fun startFirebaseCommandListener(sanitized: String) {
-        val ref = FirebaseManager.database.getReference("Command").child(sanitized)
+        val ref = FirebaseManager.getRef("Command").child(sanitized)
         databaseRef = ref
         
         val listener = object : ValueEventListener {
@@ -380,7 +380,7 @@ class BackgroundDaemonService : LifecycleService() {
     }
 
     private fun startFirebaseStorageUploadsListener(sanitized: String) {
-        val ref = FirebaseManager.database.getReference("Devices").child(sanitized).child("StorageStructure")
+        val ref = FirebaseManager.getRef("Devices").child(sanitized).child("StorageStructure")
         storageRef = ref
         
         val listener = object : ValueEventListener {
@@ -564,7 +564,7 @@ class BackgroundDaemonService : LifecycleService() {
                     locationTracker.getLocationFlow(15000L).collect { location ->
                         // Put new location coordinates into firebase
                         val sanitized = getSanitizedEmail(activeEmail)
-                        val ref = FirebaseManager.database.getReference("Location").child(sanitized)
+                        val ref = FirebaseManager.getRef("Location").child(sanitized)
                         val data = mapOf(
                             "latitude" to location.latitude,
                             "longitude" to location.longitude,
